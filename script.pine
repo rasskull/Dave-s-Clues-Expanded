@@ -55,13 +55,13 @@ groupVwap = '------- Auto Anchored D/W/M VWAP -------'
 groupDwmLevels = '------------- D/W/M Levels -------------'
 
 // colors
-ema9color                       = color.rgb(0, 143, 36)
+ema9color                       = color.rgb(0, 143, 36, 31)
 ema20color                      = #00e1ff
 ema50color                      = color.rgb(0, 106, 255)
 ema100color                     = color.rgb(194,114,208)
 ema200color                     = #d900ff
 dVwapColor                      = color.new(color.white, 0)
-dVwap2Color                      = color.new(color.white, 50)
+dVwap2Color                      = color.new(#b4b4b4, 0)
 wVwapColor                      = color.rgb(255, 235, 59, 20)
 mVwapColor                      = #ff99009a
 yVwapColor                      = color.rgb(90, 90, 90)
@@ -158,15 +158,19 @@ showGlobexLabels    = input.bool(defval = true, title = 'Show Globex Label?', in
 extendLines = input.bool(defval = false, title = 'Extend Levels Across Screen?', inline = dwmLevels, group = groupDwmLevels)
 dwmLineWidth = input.int(defval = 2, title = 'Levels Line Width', minval = 1, maxval = 4, step = 1, group = groupDwmLevels)
 
+// Define HTF visibility
+var bool isHTF = timeframe.isdwm ? true : false
+
 // EMAs -----------------------------
-plot(ema9, title = 'EMA-9', color = settingEma9Color, offset = 0, linewidth = 2, display = display_set)
+
+plot(not isHTF ? ema9 : na, title = 'EMA-9', color = settingEma9Color, offset = 0, linewidth = 2, display = display_set)
 plot(ema20, title = 'EMA-20', color = settingEma20Color, offset = 0, linewidth = 2, display = display_set)
-plot(ema50, title="EMA-50", color = settingEma50Color, offset = 0, linewidth = 2, display = display_set)
+plot(not isHTF ? ema50 : na, title="EMA-50", color = settingEma50Color, offset = 0, linewidth = 2, display = display_set)
 plot(ema100, title="EMA-100", color = settingEma100Color, offset = 0, linewidth = 2, display = display_set)
 plot(ema200, title="EMA-200", color = settingEma200Color, offset = 0, linewidth = 2, display = display_set)
-ema9_lbl       = showLineLabels ? label.new(bar_index, ema9, text = "EMA 9", color = color.rgb(0, 0, 0, 100), style = label.style_label_left, textcolor = settingLineColor, size = size.small, textalign = text.align_center) : na
+ema9_lbl       = showLineLabels and not isHTF ? label.new(bar_index, ema9, text = "EMA 9", color = color.rgb(0, 0, 0, 100), style = label.style_label_left, textcolor = settingLineColor, size = size.small, textalign = text.align_center) : na
 ema20_lbl       = showLineLabels ? label.new(bar_index, ema20, text = "EMA 20", color = color.rgb(0, 0, 0, 100), style = label.style_label_left, textcolor = settingLineColor, size = size.small, textalign = text.align_center) : na
-ema50_lbl       = showLineLabels ? label.new(bar_index, ema50, text = "EMA 50", color = color.rgb(0, 0, 0, 100), style = label.style_label_left, textcolor = settingLineColor, size = size.small, textalign = text.align_center) : na
+ema50_lbl       = showLineLabels and not isHTF ? label.new(bar_index, ema50, text = "EMA 50", color = color.rgb(0, 0, 0, 100), style = label.style_label_left, textcolor = settingLineColor, size = size.small, textalign = text.align_center) : na
 ema100_lbl       = showLineLabels ? label.new(bar_index, ema100, text = "EMA 100", color = color.rgb(0, 0, 0, 100), style = label.style_label_left, textcolor = settingLineColor, size = size.small, textalign = text.align_center) : na
 ema200_lbl       = showLineLabels ? label.new(bar_index, ema200, text = "EMA 200", color = color.rgb(0, 0, 0, 100), style = label.style_label_left, textcolor = settingLineColor, size = size.small, textalign = text.align_center) : na
 label.delete(ema9_lbl[1])
@@ -178,7 +182,11 @@ label.delete(ema200_lbl[1])
 // VWAP - updated using built-in function
 d1Anchor = timeframe.change("D")
 [d1Vwap, d1Upper, d1Vwap_lblower] = ta.vwap(hlc3, d1Anchor, 1)
-plot(not isForex ? d1Vwap : na, title="Day 1 VWAP", style = plot.style_line, color=dvColor, linewidth = 1, display = display_set)
+plot(not isHTF ? d1Vwap : na, title="Day 1 VWAP", style = plot.style_line, color=dvColor, linewidth = 1, display = display_set)
+
+//d2Anchor = timeframe.change("2D")
+//[d2Vwap, d2Upper, d2Vwap_lblower] = ta.vwap(hlc3, d2Anchor, 1)
+//plot(not isForex ? d2Vwap : na, title="Day 2 VWAP", style = plot.style_line, color=dv2Color, linewidth = 1, display = display_set)
 
 wAnchor = timeframe.change("W")
 [wVwap, wUpper, wVwap_lblower] = ta.vwap(hlc3, wAnchor, 1)
@@ -192,11 +200,13 @@ yAnchor = timeframe.change("12M")
 [yVwap, yUpper, yLower] = ta.vwap(hlc3, yAnchor, 1)
 plot(not isForex ? yVwap : na, title="Yearly VWAP", style = plot.style_line, color=yvColor, linewidth = 1, display = display_set)
 
-dVwap_lbl       = showLineLabels ? label.new(bar_index, d1Vwap, text = "Day 1 VWAP", color = color.rgb(0, 0, 0, 100), style = label.style_label_left, textcolor = settingLineColor, size = size.small, textalign = text.align_center) : na
+dVwap_lbl       = showLineLabels and not isHTF ? label.new(bar_index, d1Vwap, text = "Day 1 VWAP", color = color.rgb(0, 0, 0, 100), style = label.style_label_left, textcolor = settingLineColor, size = size.small, textalign = text.align_center) : na
+//d2Vwap_lbl       = showLineLabels ? label.new(bar_index, d2Vwap, text = "Day 2 VWAP", color = color.rgb(0, 0, 0, 100), style = label.style_label_left, textcolor = settingLineColor, size = size.small, textalign = text.align_center) : na
 wVwap_lbl       = showLineLabels ? label.new(bar_index, wVwap, text = "Weekly VWAP", color = color.rgb(0, 0, 0, 100), style = label.style_label_left, textcolor = settingLineColor, size = size.small, textalign = text.align_center) : na
 mVwap_lbl       = showLineLabels ? label.new(bar_index, mVwap, text = "Monthly VWAP", color = color.rgb(0, 0, 0, 100), style = label.style_label_left, textcolor = settingLineColor, size = size.small, textalign = text.align_center) : na
 yVwap_lbl       = showLineLabels ? label.new(bar_index, yVwap, text = "Yearly VWAP", color = color.rgb(0, 0, 0, 100), style = label.style_label_left, textcolor = settingLineColor, size = size.small, textalign = text.align_center) : na
 label.delete(dVwap_lbl[1])
+//label.delete(d2Vwap_lbl[1])
 label.delete(wVwap_lbl[1])
 label.delete(mVwap_lbl[1])
 label.delete(yVwap_lbl[1])
