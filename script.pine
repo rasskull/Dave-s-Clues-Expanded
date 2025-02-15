@@ -66,10 +66,12 @@ wVwapColor                      = color.rgb(255, 235, 59, 20)
 mVwapColor                      = #ff99009a
 yVwapColor                      = color.rgb(90, 90, 90)
 globexLevelColor                = color.rgb(120, 123, 134, 17)
+fLevelColor                     = color.rgb(162, 0, 255)
 dLevelColor                     = color.rgb(16, 105, 207, 18)
-wLevelColor                     = color.rgb(218, 221, 8, 5)
+wLevelColor                     = color.rgb(218, 221, 8, 45)
 mLevelColor                     = color.rgb(255, 153, 0, 23)
 lineLabelColor                  = color.new(color.white, 50)
+f_Line_Color = input.color(defval = fLevelColor, title = '4 Hour Level', inline = dwmLevels, group = groupDwmLevels)
 d_Line_Color = input.color(defval = dLevelColor, title = 'Daily Level', inline = dwmLevels, group = groupDwmLevels)
 w_Line_Color = input.color(defval = wLevelColor, title = 'Weekly Level', inline = dwmLevels, group = groupDwmLevels)
 m_Line_Color = input.color(defval = mLevelColor, title = 'Monthly Level', inline = dwmLevels, group = groupDwmLevels)
@@ -78,11 +80,6 @@ pm_lo_color          = input.color(defval=color.rgb(192, 20, 20), title="PreMark
 
 // GLOBALS /  CALCS ----------------------------
 StartTime() => hour(time, "UTC") == 14 and minute(time, "UTC") >= 30 and bar_index>60
-// Clear(int items) =>
-//     if line.all.size()>items and items!=0
-//         for i = 1 to line.all.size()-items
-//             line.all.get(0).delete()
-//             box.all.get(0).delete()
 Offset(X) =>
     Bar = math.min(time - time[1], time[1] - time[2])
     time + Bar * (1 + X * 1)
@@ -131,7 +128,7 @@ if StartTime() and not StartTime()[1] and not session.isfirstbar
 _gH := isGlobex and high > _gH ? high : _gH
 _gL := isGlobex and low < _gL ? low : _gL
 
-// [_gH, _gL, _gT] = request.security(syminfo.tickerid, '930', [high, low, close], barmerge.gaps_off, barmerge.lookahead_on)
+[_fH, _fL, _fC, _fO] = request.security(syminfo.tickerid, '240', [high[0], low[0], close[0], open[0]], barmerge.gaps_off, barmerge.lookahead_on)
 [_dH, _dL, _dC] = request.security(syminfo.tickerid, 'D', [high[1], low[1], close[1]], barmerge.gaps_off, barmerge.lookahead_on)
 [_wH, _wL, _wC] = request.security(syminfo.tickerid, 'W', [high[1], low[1], close[1]], barmerge.gaps_off, barmerge.lookahead_on)
 [_mH, _mL, _mC] = request.security(syminfo.tickerid, 'M', [high[1], low[1], close[1]], barmerge.gaps_off, barmerge.lookahead_on)
@@ -221,6 +218,19 @@ label_globex_High = not timeframe.isdwm ? label.new(bar_index, _gH, text = globe
 label_globex_Low = not timeframe.isdwm ? label.new(bar_index, _gL, text = globexBlank + 'Globex Low : ' + str.tostring(_gL, format.mintick), color = color.new(color.black, 100), style = label.style_label_left, textcolor = globexLevelColor, size = size.small, textalign = text.align_center) : na
 label.delete(label_globex_High[1])
 label.delete(label_globex_Low[1])
+
+four_WickTop_Line = not timeframe.isdwm ? line.new(time, _fH, time + 1, _fH, xloc = xloc.bar_time, extend = extendLines ? extend.both : extend.right, color = f_Line_Color, style = line.style_solid, width = dwmLineWidth) : na
+four_High_Line = not timeframe.isdwm ? line.new(time, _fO, time + 1, _fO, xloc = xloc.bar_time, extend = extendLines ? extend.both : extend.right, color = f_Line_Color, style = line.style_solid, width = dwmLineWidth) : na
+four_Low_Line = not timeframe.isdwm ? line.new(time, _fC, time + 1, _fC, xloc = xloc.bar_time, extend = extendLines ? extend.both : extend.right, color = f_Line_Color, style = line.style_solid, width = dwmLineWidth) : na
+four_WickBot_Line = not timeframe.isdwm ? line.new(time, _fL, time + 1, _fL, xloc = xloc.bar_time, extend = extendLines ? extend.both : extend.right, color = f_Line_Color, style = line.style_solid, width = dwmLineWidth) : na
+line.delete(four_WickTop_Line[1])
+line.delete(four_High_Line[1])
+line.delete(four_Low_Line[1])
+line.delete(four_WickBot_Line[1])
+label_four_High = not timeframe.isdwm ? label.new(bar_index, _fH, text = dBlank + 'Four Hour High : ' + str.tostring(_dH, format.mintick), color = color.new(color.black, 100), style = label.style_label_left, textcolor = f_Line_Color, size = size.small, textalign = text.align_center) : na
+label_four_Low = not timeframe.isdwm ? label.new(bar_index, _fL, text = dBlank + 'Four Hour Low : ' + str.tostring(_dH, format.mintick), color = color.new(color.black, 100), style = label.style_label_left, textcolor = f_Line_Color, size = size.small, textalign = text.align_center) : na
+label.delete(label_four_High[1])
+label.delete(label_four_Low[1])
 
 daily_High_Line = not timeframe.isdwm ? line.new(time, _dH, time + 1, _dH, xloc = xloc.bar_time, extend = extendLines ? extend.both : extend.right, color = d_Line_Color, style = line.style_solid, width = dwmLineWidth) : na
 daily_Low_Line = not timeframe.isdwm ? line.new(time, _dL, time + 1, _dL, xloc = xloc.bar_time, extend = extendLines ? extend.both : extend.right, color = d_Line_Color, style = line.style_solid, width = dwmLineWidth) : na
