@@ -66,12 +66,14 @@ wVwapColor                      = color.rgb(255, 235, 59, 20)
 mVwapColor                      = #ff99009a
 yVwapColor                      = color.rgb(90, 90, 90)
 globexLevelColor                = color.rgb(120, 123, 134, 17)
-fLevelColor                     = color.rgb(162, 0, 255)
+fLevelColor                     = color.rgb(162, 0, 255, 24)
+fWickLevelColor                 = color.rgb(162, 0, 255, 40)
 dLevelColor                     = color.rgb(16, 105, 207, 18)
-wLevelColor                     = color.rgb(218, 221, 8, 45)
+wLevelColor                     = color.rgb(218, 221, 8, 58)
 mLevelColor                     = color.rgb(255, 153, 0, 23)
 lineLabelColor                  = color.new(color.white, 50)
-f_Line_Color = input.color(defval = fLevelColor, title = '4 Hour Level', inline = dwmLevels, group = groupDwmLevels)
+f_Line_Color = input.color(defval = fLevelColor, title = '4 Hour Body', inline = dwmLevels, group = groupDwmLevels)
+f_Wick_Color = input.color(defval = fWickLevelColor, title = '4 Hour Wicks', inline = dwmLevels, group = groupDwmLevels)
 d_Line_Color = input.color(defval = dLevelColor, title = 'Daily Level', inline = dwmLevels, group = groupDwmLevels)
 w_Line_Color = input.color(defval = wLevelColor, title = 'Weekly Level', inline = dwmLevels, group = groupDwmLevels)
 m_Line_Color = input.color(defval = mLevelColor, title = 'Monthly Level', inline = dwmLevels, group = groupDwmLevels)
@@ -219,18 +221,18 @@ label_globex_Low = not timeframe.isdwm ? label.new(bar_index, _gL, text = globex
 label.delete(label_globex_High[1])
 label.delete(label_globex_Low[1])
 
-four_WickTop_Line = not timeframe.isdwm ? line.new(time, _fH, time + 1, _fH, xloc = xloc.bar_time, extend = extendLines ? extend.both : extend.right, color = f_Line_Color, style = line.style_solid, width = dwmLineWidth) : na
+four_WickTop_Line = not timeframe.isdwm ? line.new(time, _fH, time + 1, _fH, xloc = xloc.bar_time, extend = extendLines ? extend.both : extend.right, color = f_Wick_Color, style = line.style_solid, width = dwmLineWidth) : na
 four_High_Line = not timeframe.isdwm ? line.new(time, _fO, time + 1, _fO, xloc = xloc.bar_time, extend = extendLines ? extend.both : extend.right, color = f_Line_Color, style = line.style_solid, width = dwmLineWidth) : na
 four_Low_Line = not timeframe.isdwm ? line.new(time, _fC, time + 1, _fC, xloc = xloc.bar_time, extend = extendLines ? extend.both : extend.right, color = f_Line_Color, style = line.style_solid, width = dwmLineWidth) : na
-four_WickBot_Line = not timeframe.isdwm ? line.new(time, _fL, time + 1, _fL, xloc = xloc.bar_time, extend = extendLines ? extend.both : extend.right, color = f_Line_Color, style = line.style_solid, width = dwmLineWidth) : na
+four_WickBot_Line = not timeframe.isdwm ? line.new(time, _fL, time + 1, _fL, xloc = xloc.bar_time, extend = extendLines ? extend.both : extend.right, color = f_Wick_Color, style = line.style_solid, width = dwmLineWidth) : na
 line.delete(four_WickTop_Line[1])
 line.delete(four_High_Line[1])
 line.delete(four_Low_Line[1])
 line.delete(four_WickBot_Line[1])
-label_four_High = not timeframe.isdwm ? label.new(bar_index, _fH, text = dBlank + 'Four Hour High : ' + str.tostring(_dH, format.mintick), color = color.new(color.black, 100), style = label.style_label_left, textcolor = f_Line_Color, size = size.small, textalign = text.align_center) : na
-label_four_Low = not timeframe.isdwm ? label.new(bar_index, _fL, text = dBlank + 'Four Hour Low : ' + str.tostring(_dH, format.mintick), color = color.new(color.black, 100), style = label.style_label_left, textcolor = f_Line_Color, size = size.small, textalign = text.align_center) : na
-label.delete(label_four_High[1])
-label.delete(label_four_Low[1])
+//label_four_High = not timeframe.isdwm ? label.new(bar_index, _fH, text = dBlank + 'Four Hour High : ' + str.tostring(_dH, format.mintick), color = color.new(color.black, 100), style = label.style_label_left, textcolor = f_Line_Color, size = size.small, textalign = text.align_center) : na
+//label_four_Low = not timeframe.isdwm ? label.new(bar_index, _fL, text = dBlank + 'Four Hour Low : ' + str.tostring(_dH, format.mintick), color = color.new(color.black, 100), style = label.style_label_left, textcolor = f_Line_Color, size = size.small, textalign = text.align_center) : na
+//label.delete(label_four_High[1])
+//label.delete(label_four_Low[1])
 
 daily_High_Line = not timeframe.isdwm ? line.new(time, _dH, time + 1, _dH, xloc = xloc.bar_time, extend = extendLines ? extend.both : extend.right, color = d_Line_Color, style = line.style_solid, width = dwmLineWidth) : na
 daily_Low_Line = not timeframe.isdwm ? line.new(time, _dL, time + 1, _dL, xloc = xloc.bar_time, extend = extendLines ? extend.both : extend.right, color = d_Line_Color, style = line.style_solid, width = dwmLineWidth) : na
