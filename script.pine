@@ -55,19 +55,25 @@ groupVwap = '------- Auto Anchored D/W/M VWAP -------'
 groupDwmLevels = '------------- D/W/M Levels -------------'
 
 // colors
-ema9color                       = color.rgb(6, 224, 61, 70)
+ema9color                       = color.rgb(0, 143, 36, 31)
 ema20color                      = #00e1ff
 ema50color                      = color.rgb(0, 106, 255)
 ema100color                     = color.rgb(194,114,208)
 ema200color                     = #d900ff
 dVwapColor                      = color.new(color.white, 0)
+dVwap2Color                      = color.new(#b4b4b4, 0)
 wVwapColor                      = color.rgb(255, 235, 59, 20)
 mVwapColor                      = #ff99009a
+yVwapColor                      = color.rgb(90, 90, 90)
 globexLevelColor                = color.rgb(120, 123, 134, 17)
+fLevelColor                     = color.rgb(162, 0, 255, 24)
+fWickLevelColor                 = color.rgb(162, 0, 255, 40)
 dLevelColor                     = color.rgb(16, 105, 207, 18)
-wLevelColor                     = color.rgb(218, 221, 8, 5)
+wLevelColor                     = color.rgb(218, 221, 8, 58)
 mLevelColor                     = color.rgb(255, 153, 0, 23)
 lineLabelColor                  = color.new(color.white, 50)
+f_Line_Color = input.color(defval = fLevelColor, title = '4 Hour Body', inline = dwmLevels, group = groupDwmLevels)
+f_Wick_Color = input.color(defval = fWickLevelColor, title = '4 Hour Wicks', inline = dwmLevels, group = groupDwmLevels)
 d_Line_Color = input.color(defval = dLevelColor, title = 'Daily Level', inline = dwmLevels, group = groupDwmLevels)
 w_Line_Color = input.color(defval = wLevelColor, title = 'Weekly Level', inline = dwmLevels, group = groupDwmLevels)
 m_Line_Color = input.color(defval = mLevelColor, title = 'Monthly Level', inline = dwmLevels, group = groupDwmLevels)
@@ -76,11 +82,6 @@ pm_lo_color          = input.color(defval=color.rgb(192, 20, 20), title="PreMark
 
 // GLOBALS /  CALCS ----------------------------
 StartTime() => hour(time, "UTC") == 14 and minute(time, "UTC") >= 30 and bar_index>60
-// Clear(int items) =>
-//     if line.all.size()>items and items!=0
-//         for i = 1 to line.all.size()-items
-//             line.all.get(0).delete()
-//             box.all.get(0).delete()
 Offset(X) =>
     Bar = math.min(time - time[1], time[1] - time[2])
     time + Bar * (1 + X * 1)
@@ -129,7 +130,7 @@ if StartTime() and not StartTime()[1] and not session.isfirstbar
 _gH := isGlobex and high > _gH ? high : _gH
 _gL := isGlobex and low < _gL ? low : _gL
 
-// [_gH, _gL, _gT] = request.security(syminfo.tickerid, '930', [high, low, close], barmerge.gaps_off, barmerge.lookahead_on)
+[_fH, _fL, _fC, _fO] = request.security(syminfo.tickerid, '240', [high[0], low[0], close[0], open[0]], barmerge.gaps_off, barmerge.lookahead_on)
 [_dH, _dL, _dC] = request.security(syminfo.tickerid, 'D', [high[1], low[1], close[1]], barmerge.gaps_off, barmerge.lookahead_on)
 [_wH, _wL, _wC] = request.security(syminfo.tickerid, 'W', [high[1], low[1], close[1]], barmerge.gaps_off, barmerge.lookahead_on)
 [_mH, _mL, _mC] = request.security(syminfo.tickerid, 'M', [high[1], low[1], close[1]], barmerge.gaps_off, barmerge.lookahead_on)
@@ -143,8 +144,10 @@ settingEma100Color = input(defval = ema100color, title = '100 EMA', inline = ema
 settingEma200Color = input(defval = ema200color, title = '200 EMA', inline = ema_text, group = groupEma)
 
 dvColor         = input(defval = dVwapColor, title="D VWAP Color", inline = vwap, group = groupVwap)
+dv2Color         = input(defval = dVwap2Color, title="D2 VWAP Color", inline = vwap, group = groupVwap)
 wvColor         = input(defval = wVwapColor, title="W VWAP Color", inline = vwap, group = groupVwap)
 mvColor         = input(defval = mVwapColor, title="M VWAP Color", inline = vwap, group = groupVwap)
+yvColor         = input(defval = yVwapColor, title="Y VWAP Color", inline = vwap, group = groupVwap)
 
 settingLineColor = input(defval = lineLabelColor, title = 'Line Label Color', inline = lineLabels, group = groupLineLabels)
 showLineLabels  = input.bool(defval = false, title = "Show line labels?", inline = vwap, group = groupLineLabels)
@@ -154,15 +157,19 @@ showGlobexLabels    = input.bool(defval = true, title = 'Show Globex Label?', in
 extendLines = input.bool(defval = false, title = 'Extend Levels Across Screen?', inline = dwmLevels, group = groupDwmLevels)
 dwmLineWidth = input.int(defval = 2, title = 'Levels Line Width', minval = 1, maxval = 4, step = 1, group = groupDwmLevels)
 
+// Define HTF visibility
+var bool isHTF = timeframe.isdwm ? true : false
+
 // EMAs -----------------------------
-plot(ema9, title = 'EMA-9', color = settingEma9Color, offset = 0, linewidth = 2, display = display_set)
+
+plot(not isHTF ? ema9 : na, title = 'EMA-9', color = settingEma9Color, offset = 0, linewidth = 2, display = display_set)
 plot(ema20, title = 'EMA-20', color = settingEma20Color, offset = 0, linewidth = 2, display = display_set)
-plot(ema50, title="EMA-50", color = settingEma50Color, offset = 0, linewidth = 2, display = display_set)
+plot(not isHTF ? ema50 : na, title="EMA-50", color = settingEma50Color, offset = 0, linewidth = 2, display = display_set)
 plot(ema100, title="EMA-100", color = settingEma100Color, offset = 0, linewidth = 2, display = display_set)
 plot(ema200, title="EMA-200", color = settingEma200Color, offset = 0, linewidth = 2, display = display_set)
-ema9_lbl       = showLineLabels ? label.new(bar_index, ema9, text = "EMA 9", color = color.rgb(0, 0, 0, 100), style = label.style_label_left, textcolor = settingLineColor, size = size.small, textalign = text.align_center) : na
+ema9_lbl       = showLineLabels and not isHTF ? label.new(bar_index, ema9, text = "EMA 9", color = color.rgb(0, 0, 0, 100), style = label.style_label_left, textcolor = settingLineColor, size = size.small, textalign = text.align_center) : na
 ema20_lbl       = showLineLabels ? label.new(bar_index, ema20, text = "EMA 20", color = color.rgb(0, 0, 0, 100), style = label.style_label_left, textcolor = settingLineColor, size = size.small, textalign = text.align_center) : na
-ema50_lbl       = showLineLabels ? label.new(bar_index, ema50, text = "EMA 50", color = color.rgb(0, 0, 0, 100), style = label.style_label_left, textcolor = settingLineColor, size = size.small, textalign = text.align_center) : na
+ema50_lbl       = showLineLabels and not isHTF ? label.new(bar_index, ema50, text = "EMA 50", color = color.rgb(0, 0, 0, 100), style = label.style_label_left, textcolor = settingLineColor, size = size.small, textalign = text.align_center) : na
 ema100_lbl       = showLineLabels ? label.new(bar_index, ema100, text = "EMA 100", color = color.rgb(0, 0, 0, 100), style = label.style_label_left, textcolor = settingLineColor, size = size.small, textalign = text.align_center) : na
 ema200_lbl       = showLineLabels ? label.new(bar_index, ema200, text = "EMA 200", color = color.rgb(0, 0, 0, 100), style = label.style_label_left, textcolor = settingLineColor, size = size.small, textalign = text.align_center) : na
 label.delete(ema9_lbl[1])
@@ -171,116 +178,38 @@ label.delete(ema50_lbl[1])
 label.delete(ema100_lbl[1])
 label.delete(ema200_lbl[1])
 
-// VWAP ---------------------------------
-// If it's a short day, then there could be no daily bar. Take a previous one.
-if na(dwmBarTime)
-    dwmBarTime := nz(dwmBarTime[1])
-var periodStartD = time - time // zero
-var periodStartW = time - time // zero
-var periodStartM = time - time // zero
+// VWAP - updated using built-in function
+d1Anchor = timeframe.change("D")
+[d1Vwap, d1Upper, d1Vwap_lblower] = ta.vwap(hlc3, d1Anchor, 1)
+plot(not isHTF ? d1Vwap : na, title="Day 1 VWAP", style = plot.style_line, color=dvColor, linewidth = 1, display = display_set)
 
-makeMondayZero(dayOfWeek) => (dayOfWeek + 5) % 7
+//d2Anchor = timeframe.change("2D")
+//[d2Vwap, d2Upper, d2Vwap_lblower] = ta.vwap(hlc3, d2Anchor, 1)
+//plot(not isForex ? d2Vwap : na, title="Day 2 VWAP", style = plot.style_line, color=dv2Color, linewidth = 1, display = display_set)
 
-tradingDayStart(t) =>
-    y = year(t)
-    m = month(t)
-    d = dayofmonth(t)
-    timestamp(y, m, d, 0, 0, 0)
+wAnchor = timeframe.change("W")
+[wVwap, wUpper, wVwap_lblower] = ta.vwap(hlc3, wAnchor, 1)
+plot(not isForex ? wVwap : na, title="Weekly VWAP", style = plot.style_line, color=wvColor, linewidth = 1, display = display_set)
 
-numDaysBetween(time1, time2) =>
-    y1 = year(time1)
-    m1 = month(time1)
-    d1 = dayofmonth(time1)
-    
-    y2 = year(time2)
-    m2 = month(time2)
-    d2 = dayofmonth(time2)
-    
-    diff = math.abs(timestamp("GMT", y1, m1, d1, 0, 0) - timestamp("GMT", y2, m2, d2, 0, 0))
-    diff / MILLIS_IN_DAY
+mAnchor = timeframe.change("1M")
+[mVwap, mUpper, mVwap_lblower] = ta.vwap(hlc3, mAnchor, 1)
+plot(not isForex ? mVwap : na, title="Monthly VWAP", style = plot.style_line, color=mvColor, linewidth = 1, display = display_set)
 
-tradingDay = tradingDayStart(dwmBarTime)
+yAnchor = timeframe.change("12M")
+[yVwap, yUpper, yLower] = ta.vwap(hlc3, yAnchor, 1)
+plot(not isForex ? yVwap : na, title="Yearly VWAP", style = plot.style_line, color=yvColor, linewidth = 1, display = display_set)
 
-isNewDPeriod() =>
-    isNew = false
-    if tradingDay != nz(tradingDay[1])
-        isNew := na(tradingDay[1]) or tradingDay >= tradingDay[1]
-    
-    isNew
-
-isNewWPeriod() =>
-    isNew = false
-    if tradingDay != nz(tradingDay[1])
-        DAYS_IN_WEEK = 7
-        if isFutures
-            isNew := dayofweek(periodStartW) + numDaysBetween(periodStartW, tradingDay) >= DAYS_IN_WEEK
-        else
-            isNew := makeMondayZero(dayofweek(periodStartW)) + numDaysBetween(periodStartW, tradingDay) >= DAYS_IN_WEEK
-            
-    isNew
-
-isNewMPeriod() =>
-    isNew = false
-    if tradingDay != nz(tradingDay[1])
-        isNew := month(periodStartM) != month(tradingDay) or year(periodStartM) != year(tradingDay)
-            
-    isNew
-
-sumSrcD = float(na)
-sumVolD = float(na)
-sumSrcD := nz(sumSrcD[1], 0)
-sumVolD := nz(sumVolD[1], 0)
-
-sumSrcW = float(na)
-sumVolW = float(na)
-sumSrcW := nz(sumSrcW[1], 0)
-sumVolW := nz(sumVolW[1], 0)
-
-sumSrcM = float(na)
-sumVolM = float(na)
-sumSrcM := nz(sumSrcM[1], 0)
-sumVolM := nz(sumVolM[1], 0)
-
-sumSrcY = float(na)
-sumVolY = float(na)
-sumSrcY := nz(sumSrcY[1], 0)
-sumVolY := nz(sumVolY[1], 0)
-
-if isNewDPeriod()
-    periodStartD := tradingDay
-    sumSrcD := 0.0
-    sumVolD := 0.0
-
-if isNewWPeriod()
-    periodStartW := tradingDay
-    sumSrcW := 0.0
-    sumVolW := 0.0
-
-if isNewMPeriod()
-    periodStartM := tradingDay
-    sumSrcM := 0.0
-    sumVolM := 0.0 
-
-if not na(hlc3) and not na(volume)
-    sumSrcD := sumSrcD + hlc3 * volume
-    sumVolD := sumVolD + volume
-    sumSrcW := sumSrcW + hlc3 * volume
-    sumVolW := sumVolW + volume
-    sumSrcM := sumSrcM + hlc3 * volume
-    sumVolM := sumVolM + volume
-      
-dVwapValue = sumSrcD / sumVolD
-wVwapValue = sumSrcW / sumVolW
-mVwapValue = sumSrcM / sumVolM
-plot(not isForex ? dVwapValue : na, title="D VWAP", style = plot.style_line, color=dvColor, linewidth = 1, display = display_set)
-plot(not isForex ? wVwapValue : na, title="W VWAP", style = plot.style_line, color=wvColor, linewidth = 1, display = display_set)
-plot(not isForex ? mVwapValue : na, title="M VWAP", style = plot.style_line, color=mvColor, linewidth = 1, display = display_set)
-dVwap_lbl       = showLineLabels ? label.new(bar_index, dVwapValue, text = "Daily VWAP", color = color.rgb(0, 0, 0, 100), style = label.style_label_left, textcolor = settingLineColor, size = size.small, textalign = text.align_center) : na
-wVwap_lbl       = showLineLabels ? label.new(bar_index, wVwapValue, text = "Weekly VWAP", color = color.rgb(0, 0, 0, 100), style = label.style_label_left, textcolor = settingLineColor, size = size.small, textalign = text.align_center) : na
-mVwap_lbl       = showLineLabels ? label.new(bar_index, mVwapValue, text = "Monthly VWAP", color = color.rgb(0, 0, 0, 100), style = label.style_label_left, textcolor = settingLineColor, size = size.small, textalign = text.align_center) : na
+dVwap_lbl       = showLineLabels and not isHTF ? label.new(bar_index, d1Vwap, text = "Day 1 VWAP", color = color.rgb(0, 0, 0, 100), style = label.style_label_left, textcolor = settingLineColor, size = size.small, textalign = text.align_center) : na
+//d2Vwap_lbl       = showLineLabels ? label.new(bar_index, d2Vwap, text = "Day 2 VWAP", color = color.rgb(0, 0, 0, 100), style = label.style_label_left, textcolor = settingLineColor, size = size.small, textalign = text.align_center) : na
+wVwap_lbl       = showLineLabels ? label.new(bar_index, wVwap, text = "Weekly VWAP", color = color.rgb(0, 0, 0, 100), style = label.style_label_left, textcolor = settingLineColor, size = size.small, textalign = text.align_center) : na
+mVwap_lbl       = showLineLabels ? label.new(bar_index, mVwap, text = "Monthly VWAP", color = color.rgb(0, 0, 0, 100), style = label.style_label_left, textcolor = settingLineColor, size = size.small, textalign = text.align_center) : na
+yVwap_lbl       = showLineLabels ? label.new(bar_index, yVwap, text = "Yearly VWAP", color = color.rgb(0, 0, 0, 100), style = label.style_label_left, textcolor = settingLineColor, size = size.small, textalign = text.align_center) : na
 label.delete(dVwap_lbl[1])
+//label.delete(d2Vwap_lbl[1])
 label.delete(wVwap_lbl[1])
 label.delete(mVwap_lbl[1])
+label.delete(yVwap_lbl[1])
+
 
 // DWM / PreMarket / Globex PRICE LEVELS --------------------------
 globex_High_Line = not timeframe.isdwm ? line.new(time, _gH, time + 1, _gH, xloc = xloc.bar_time, extend = extendLines ? extend.both : extend.right, color = globexLevelColor, style = line.style_solid, width = dwmLineWidth) : na
@@ -291,6 +220,15 @@ label_globex_High = not timeframe.isdwm ? label.new(bar_index, _gH, text = globe
 label_globex_Low = not timeframe.isdwm ? label.new(bar_index, _gL, text = globexBlank + 'Globex Low : ' + str.tostring(_gL, format.mintick), color = color.new(color.black, 100), style = label.style_label_left, textcolor = globexLevelColor, size = size.small, textalign = text.align_center) : na
 label.delete(label_globex_High[1])
 label.delete(label_globex_Low[1])
+
+//four_WickTop_Line = not timeframe.isdwm ? line.new(time, _fH, time + 1, _fH, xloc = xloc.bar_time, extend = extendLines ? extend.both : extend.right, color = f_Wick_Color, style = line.style_solid, width = dwmLineWidth) : na
+//four_High_Line = not timeframe.isdwm ? line.new(time, _fO, time + 1, _fO, xloc = xloc.bar_time, extend = extendLines ? extend.both : extend.right, color = f_Line_Color, style = line.style_solid, width = dwmLineWidth) : na
+//four_Low_Line = not timeframe.isdwm ? line.new(time, _fC, time + 1, _fC, xloc = xloc.bar_time, extend = extendLines ? extend.both : extend.right, color = f_Line_Color, style = line.style_solid, width = dwmLineWidth) : na
+//four_WickBot_Line = not timeframe.isdwm ? line.new(time, _fL, time + 1, _fL, xloc = xloc.bar_time, extend = extendLines ? extend.both : extend.right, color = f_Wick_Color, style = line.style_solid, width = dwmLineWidth) : na
+//line.delete(four_WickTop_Line[1])
+//line.delete(four_High_Line[1])
+//line.delete(four_Low_Line[1])
+//line.delete(four_WickBot_Line[1])
 
 daily_High_Line = not timeframe.isdwm ? line.new(time, _dH, time + 1, _dH, xloc = xloc.bar_time, extend = extendLines ? extend.both : extend.right, color = d_Line_Color, style = line.style_solid, width = dwmLineWidth) : na
 daily_Low_Line = not timeframe.isdwm ? line.new(time, _dL, time + 1, _dL, xloc = xloc.bar_time, extend = extendLines ? extend.both : extend.right, color = d_Line_Color, style = line.style_solid, width = dwmLineWidth) : na
